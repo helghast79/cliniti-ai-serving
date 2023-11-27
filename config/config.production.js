@@ -4,8 +4,8 @@ module.exports = {
     env: 'production',
     appName: 'Cliniti AI Serving',
     http: {
-        address: process.env.web_address || '127.0.0.1',
-	    port: process.env.web_port || 8008
+        address: process.env.web_address || '0.0.0.0',
+	port: process.env.web_port || 8008
     },
     ai: {
         jobsQueueFile: 'jobs/jobsQueue.json',
