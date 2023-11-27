@@ -1,0 +1,25 @@
+{
+  "name": "cliniti-ai-serving",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Miguel Chambel",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "body-parser": "^1.20.2",
+    "core-js": "^3.33.3",
+    "dicom-parser": "^1.8.21",
+    "express": "^4.18.2",
+    "express-winston": "^4.2.0",
+    "fs-extra": "^11.1.1",
+    "multer": "^1.4.5-lts.1",
+    "path": "^0.12.7",
+    "port-pid": "^0.0.7",
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^4.7.1"
+  }
+}
