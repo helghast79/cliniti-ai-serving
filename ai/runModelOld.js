@@ -22,8 +22,19 @@ const command = ['monai-deploy', 'run', 'my_app_pcai:latest']
 
 
 //start executing the model
-const runModel = async (model, dataSourcePath, res = console.log) => {
+const runModel = async (model, modelInputData, res = console.log) => {
     console.time("modelExecuteTime")
+    //model
+    // {
+    //   "id": "prostate_nr1",
+    //   "name": "Prostate Gland Segmentation",
+    //   "version": "0.1",
+    //   "releaseDate": "2023-02-09",
+    //   "command": "monai run my_app_pcai:latest",
+    //   "params": ["input/images", "output"]
+    // },
+
+    const {pacsApi, seriesT2} = modelInputData
     
     //create an ID for this job
     const jobId = crypto.randomBytes(16).toString("hex")
@@ -56,7 +67,36 @@ const runModel = async (model, dataSourcePath, res = console.log) => {
     
     //files are ready so start the python mode
     res('-->', [...command, jobFolderInput, jobFolderOutput].join(' '))
-  
+    
+    // const code = await cmd([...command, jobFolderInput, jobFolderOutput], {cwd: '/home/ccig/Desktop/monai_app/basic-monai-deploy-scaffold'})
+    // console.log('script ended ----- ', code)
+
+    // //get the output of files
+    // const outputFiles = fs.readdirSync(jobFolderOutput, {withFileTypes: true})
+    //   .filter(item => !item.isDirectory())
+    //   .map(item => item.name)
+    
+    // if(!outputFiles){
+    //   console.log("no files in output folder")
+    //   return {err: "no files in output folder"}
+    // }
+    
+    // const form = new FormData()
+    // form.append('file', fs.createReadStream( path.join(jobFolderOutput, outputFiles[0])) )
+
+    // const responseUpload = await axios.post(`${pacsApi}/instances`, form, {
+    //     httpsAgent: agent,
+    //     headers: {
+    //         ...form.getHeaders()
+    //     }
+    // })
+
+    fs.rmSync(jobFolder, { recursive: true, force: true })
+
+    res("end")
+    
+
+	  console.timeEnd("modelExecuteTime")
 
 }
   
@@ -65,6 +105,25 @@ const runModel = async (model, dataSourcePath, res = console.log) => {
 
 
 
+
+
+
+
+  async function downloadFile (url, destination) {  
+    const writer = fs.createWriteStream(destination)
+  
+    axios.get(url,{
+        httpsAgent: agent,
+        responseType: 'stream',
+    }).then( response => {
+        response.data.pipe(writer)
+    })
+  
+    return new Promise((resolve, reject) => {
+      writer.on('finish', resolve)
+      writer.on('error', reject)
+    })
+  }
 
 
 

@@ -7,8 +7,14 @@ const   express = require('express'),
         http = require("http"),
         {logger, expressLogger } = require('./logger')
 
+        
+        
 const app = express()
 const httpServer = http.createServer(app)
+        
+// ================================================================
+/* Start the websocket */
+var io = require('./sockets')(httpServer)
 
 // Configure the app to use bodyParser()
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -29,12 +35,12 @@ app.use(express.json())
 app.use('/', require('./routes'))
 
 // Watch for jobs queue file changes
-fs.watchFile(path.join(__dirname, cfg.ai.jobsQueueFile), (curr, prev) => {
-    if (curr.mtime > prev.mtime) {
-        console.log('File has been changed', curr, prev)
+// fs.watchFile(path.join(__dirname, cfg.ai.jobsQueueFile), (curr, prev) => {
+//     if (curr.mtime > prev.mtime) {
+//         console.log('File has been changed', curr, prev)
         
-    }
-})
+//     }
+// })
 
 /* Start the server */
 const server = httpServer.listen(cfg.http.port, cfg.http.address, () => {

@@ -5,7 +5,10 @@ module.exports = {
     appName: 'Cliniti AI Serving',
     http: {
         address: process.env.web_address || '0.0.0.0',
-	port: process.env.web_port || 8008
+	    port: process.env.web_port || 8008
+    },
+    ws: {
+        path: '/ws-ai'
     },
     ai: {
         jobsQueueFile: 'jobs/jobsQueue.json',

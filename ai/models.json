@@ -1,17 +1,86 @@
 [
     {
-        "id": "prostate_nr1",
-        "name": "Prostate Gland Segmentation",
+        "id": "prostate_zones",
+        "name": "Prostate Zones Segmentation",
         "version": "0.1",
-        "releaseDate": "2023-02-09",
-        "command": "monai run my_app_pcai:latest",
-        "params": ["input/images", "output"]
+        "releaseDate": "2023-12-11",
+        "requirements": [
+            "1 MRI T2 weighted series"
+        ],
+        "frontend":[
+            {"id": "seriesT2", "type": "series", "label": "T2 MRI", "required": true},
+            {"id": "psa", "type": "number", "label": "Patient Age", "minFractionDigits":0, "maxFractionDigits":0, "required": false}
+        ],
+        "output":[
+            {"id":"segT2", "type": "uploadSeg", "fileType": "dcm", "target":"seriesT2"}
+        ],
+        "command": "sudo /home/jose_almeida/micromamba/envs/docker-env/bin/python /home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py",
+        "commandParams": [
+            {"key": "series_paths", "value": ["inputs/seriesT2"], "type": "relativePath"},
+            {"key": "model_path", "value": "/home/jose_almeida/projects/nnunet_docker/models/prostate_zone_model", "type": "fixed"},
+            {"key": "output_dir", "value": "output", "type": "relativePath"},
+            {"key": "metadata_path", "value": "/home/jose_almeida/projects/nnunet_docker/metadata_templates/prostate-zones.json", "type": "fixed"},
+            {"key": "folds", "value": "0 1 2 3 4", "type": "fixed"},
+            {"key": "tta", "value": "", "type": "fixed"},
+            {"key": "is_dicom", "value": "", "type": "fixed"}
+        ],
+        "response": [
+            {"type": "uploadSeg", "fileType": "dcm"}
+        ]
+    },
+    {
+        "id": "prostate_whole_gland",
+        "name": "Prostate Whole Gland Segmentation",
+        "version": "0.1",
+        "releaseDate": "2023-12-11",
+        "requirements": [
+            "1 MRI T2 weighted series"
+        ],
+        "frontend":[
+            {"id": "seriesT2", "type": "series", "label": "T2 MRI", "required": true},
+            {"id": "psa", "type": "number", "label": "PSA", "minFractionDigits":0, "maxFractionDigits":2, "required": false}
+        ],
+        "output":[
+            {"id":"segT2", "type": "uploadSeg", "fileType": "dcm", "target":"seriesT2"}
+        ],
+        "command": "sudo /home/jose_almeida/micromamba/envs/docker-env/bin/python /home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py",
+        "commandParams": [
+            {"key": "series_paths", "value": ["inputs/seriesT2"], "type": "relativePath"},
+            {"key": "model_path", "value": "/home/jose_almeida/projects/nnunet_docker/models/prostate_whole_gland_model", "type": "fixed"},
+            {"key": "output_dir", "value": "output", "type": "relativePath"},
+            {"key": "metadata_path", "value": "/home/jose_almeida/projects/nnunet_docker/metadata_templates/whole-prostate.json", "type": "fixed"},
+            {"key": "folds", "value": "0 1 2 3 4", "type": "fixed"},
+            {"key": "tta", "value": "", "type": "fixed"},
+            {"key": "is_dicom", "value": "", "type": "fixed"}
+        ],
+        "response": [
+            {"id": "segT2", "type": "uploadSeg", "fileType": "dcm"}
+        ]
     },
     {
         "id": "prostate_ac1",
         "name": "Prostate Lesions Probability Radiomics",
         "version": "0.1",
         "releaseDate": "2023-11-29",
+        "requirements": [
+            "1 MRI T2 weighted series",
+            "1 ADC series",
+            "1 DWI series"
+        ],
+        "frontend":[
+            {"id": "seriesT2", "type": "series", "label": "T2 MRI", "required": true},
+            {"id": "seriesADC", "type": "series", "label": "ADC", "required": true},
+            {"id": "seriesDWI", "type": "series", "label": "T2 MRI", "required": true}
+        ],
+        "output":{
+            "type": "card",
+            "components":[
+                {
+                    "type": "message"
+                }
+            ]
+
+        },
         "command": "docker run model",
         "params": ["input/images/t2", "input/images/adc", "input/features.json", "output"]
     }
