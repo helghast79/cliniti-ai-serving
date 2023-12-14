@@ -146,7 +146,7 @@ const startWS = (httpServer)=>{
             //const command = commandArray.join(' ')
 
             //when testing we need to simulate a command run and we nned to copy output test files to the job output folder
-            if(cfg.env !== 'dev'){
+            if(cfg.env === 'dev'){
                 //a test command, could be other
                 commandArray = ['pwd']
                 //since test will not produce an output, copy some output's to the output folder for testing
@@ -193,7 +193,7 @@ const startWS = (httpServer)=>{
             }
             //job finished so delete the job folder - consider keeping it if a job management tool is used
             console.log('deleting', targetPath)
-            fs.rmSync(targetPath, { recursive: true, force: true })
+            //fs.rmSync(targetPath, { recursive: true, force: true })
         })
 
      
@@ -218,8 +218,12 @@ const startWS = (httpServer)=>{
 
 function cmd(command, options = {}) {
  
+	//options.stdio = ['pipe', 'pipe', 'pipe']
+
     const p = spawn(command[0], command.slice(1), options)
-    
+	
+	//p.stdin.write(options.inputPassword + '\n');
+        //p.stdin.end()    
     
     return new Promise((resolve, reject) => {
         let stdoutData = ''
