@@ -9,20 +9,26 @@
         ],
         "frontend":[
             {"id": "seriesT2", "type": "series", "label": "T2 MRI", "required": true},
-            {"id": "psa", "type": "number", "label": "Patient Age", "minFractionDigits":0, "maxFractionDigits":0, "required": false}
+            {"id": "folds", "type": "range", "modelParam": true, "label": "AI Folds", "minValue":0, "maxValue":4, "increment":1, "required": false}
         ],
         "output":[
             {"id":"segT2", "type": "uploadSeg", "fileType": "dcm", "target":"seriesT2"}
         ],
-        "command": "sudo /home/jose_almeida/micromamba/envs/docker-env/bin/python /home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py",
-        "commandParams": [
-            {"key": "series_paths", "value": ["inputs/seriesT2"], "type": "relativePath"},
-            {"key": "model_path", "value": "/home/jose_almeida/projects/nnunet_docker/models/prostate_zone_model", "type": "fixed"},
-            {"key": "output_dir", "value": "output", "type": "relativePath"},
-            {"key": "metadata_path", "value": "/home/jose_almeida/projects/nnunet_docker/metadata_templates/prostate-zones.json", "type": "fixed"},
-            {"key": "folds", "value": "0 1 2 3 4", "type": "fixed"},
-            {"key": "tta", "value": "", "type": "fixed"},
-            {"key": "is_dicom", "value": "", "type": "fixed"}
+        "command": [
+            {"value": "python", "type": "fixed"},
+            {"value": "/home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py", "type": "fixed"},
+            {"value": "-i", "type": "fixed"},
+            {"value": "inputs/seriesT2", "type": "relativePath"},
+            {"value": "-m", "type": "fixed"},
+            {"value": "/home/jose_almeida/projects/nnunet_docker/models/prostate_zone_model", "type": "fixed"},
+            {"value": "-o", "type": "fixed"},
+            {"value": "output", "type": "relativePath"},
+            {"value": "-M", "type": "fixed"},
+            {"value": "/home/jose_almeida/projects/nnunet_docker/metadata_templates/prostate-zones.json", "type": "fixed"},
+            {"value": "-f", "type": "fixed"},
+            {"type": "input", "ref":"folds", "default":"2"},
+            {"value": "-t", "type": "fixed"},
+            {"value": "-D", "type": "fixed"}
         ],
         "response": [
             {"type": "uploadSeg", "fileType": "dcm"}
@@ -38,20 +44,26 @@
         ],
         "frontend":[
             {"id": "seriesT2", "type": "series", "label": "T2 MRI", "required": true},
-            {"id": "psa", "type": "number", "label": "PSA", "minFractionDigits":0, "maxFractionDigits":2, "required": false}
+            {"id": "folds", "type": "range", "modelParam": true, "label": "AI Folds", "minValue":0, "maxValue":4, "increment":1, "required": false}
         ],
         "output":[
             {"id":"segT2", "type": "uploadSeg", "fileType": "dcm", "target":"seriesT2"}
         ],
-        "command": "sudo /home/jose_almeida/micromamba/envs/docker-env/bin/python /home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py",
-        "commandParams": [
-            {"key": "series_paths", "value": ["inputs/seriesT2"], "type": "relativePath"},
-            {"key": "model_path", "value": "/home/jose_almeida/projects/nnunet_docker/models/prostate_whole_gland_model", "type": "fixed"},
-            {"key": "output_dir", "value": "output", "type": "relativePath"},
-            {"key": "metadata_path", "value": "/home/jose_almeida/projects/nnunet_docker/metadata_templates/whole-prostate.json", "type": "fixed"},
-            {"key": "folds", "value": "0 1 2 3 4", "type": "fixed"},
-            {"key": "tta", "value": "", "type": "fixed"},
-            {"key": "is_dicom", "value": "", "type": "fixed"}
+        "command": [
+            {"value": "python", "type": "fixed"},
+            {"value": "/home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py", "type": "fixed"},
+            {"value": "-i", "type": "fixed"},
+            {"value": "inputs/seriesT2", "type": "relativePath"},
+            {"value": "-m", "type": "fixed"},
+            {"value": "/home/jose_almeida/projects/nnunet_docker/models/prostate_whole_gland_model", "type": "fixed"},
+            {"value": "-o", "type": "fixed"},
+            {"value": "output", "type": "relativePath"},
+            {"value": "-M", "type": "fixed"},
+            {"value": "/home/jose_almeida/projects/nnunet_docker/metadata_templates/whole-prostate.json", "type": "fixed"},
+            {"value": "-f", "type": "fixed"},
+            {"type": "input", "ref":"folds", "default":"2"},
+            {"value": "-t", "type": "fixed"},
+            {"value": "-D", "type": "fixed"}
         ],
         "response": [
             {"id": "segT2", "type": "uploadSeg", "fileType": "dcm"}
@@ -72,16 +84,27 @@
             {"id": "seriesADC", "type": "series", "label": "ADC", "required": true},
             {"id": "seriesDWI", "type": "series", "label": "T2 MRI", "required": true}
         ],
-        "output":{
-            "type": "card",
-            "components":[
-                {
-                    "type": "message"
-                }
-            ]
-
-        },
-        "command": "docker run model",
-        "params": ["input/images/t2", "input/images/adc", "input/features.json", "output"]
+        "output":[
+            {"id":"message", "type": "dialog"}
+        ],
+        "command": [
+            {"value": "python", "type": "fixed"},
+            {"value": "/home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py", "type": "fixed"},
+            {"value": "-i", "type": "fixed"},
+            {"value": ["inputs/seriesT2", "inputs/seriesADC", "inputs/seriesDWI"], "type": "relativePath"},
+            {"value": "-m", "type": "fixed"},
+            {"value": "", "type": "fixed"},
+            {"value": "-o", "type": "fixed"},
+            {"value": "output", "type": "relativePath"},
+            {"value": "-M", "type": "fixed"},
+            {"value": "/home/jose_almeida/projects/nnunet_docker/metadata_templates/whole-prostate.json", "type": "fixed"},
+            {"value": "-f", "type": "fixed"},
+            {"type": "input", "ref":"folds", "default":"2"},
+            {"value": "-t", "type": "fixed"},
+            {"value": "-D", "type": "fixed"}
+        ],
+        "response": [
+            {"type": "message", "fileType": "json"}
+        ]
     }
 ]

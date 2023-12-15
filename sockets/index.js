@@ -4,7 +4,7 @@
 const   cfg = require('../config'),
         path = require('path'),
         fs = require('fs-extra'),
-        { spawn } = require('child_process'),
+        { spawn, exec } = require('child_process'),
         modelList = require(`../${cfg.ai.modelsFile}`)
 
 
@@ -38,6 +38,7 @@ const startWS = (httpServer)=>{
 
             const modelInputs = payload.job.modelInputs // [{id: seriesT2, type: series}, ...]
             const jsonObj = {}
+            const modelParams = {}
 
             //used for testing, holds some testing output to simulate the model inference
             const testOutputFolder = path.join(__dirname, '../jobs/test/output')
@@ -81,7 +82,10 @@ const startWS = (httpServer)=>{
                               const fileName = `file_${index}.dcm`
                               const filePath = path.join(targetSeriesPath, fileName)
                               // Write the buffer to a file
+				
                               fs.writeFileSync(filePath, element)
+                              fs.chmodSync(filePath, '777')
+			                
                             } else {
                               //download file from the url
 
@@ -100,7 +104,15 @@ const startWS = (httpServer)=>{
                     }
                 //other type of inputs
                 }else{
-                    jsonObj[modelInput] = modelInputValue
+                    //input is to be included in command line
+                    if(inputDef.modelParam){
+                        modelParams[modelInput] = modelInputValue
+
+                    //input to be saved in a json file and put on the inputs folder for AI model to consume
+                    }else{
+                        jsonObj[modelInput] = modelInputValue
+                    }
+                    
                 }
 
             }
@@ -125,11 +137,15 @@ const startWS = (httpServer)=>{
 
             
             //build command
-            let commandArray = [modelCfg.command] //starting instruction
-            for(const param of modelCfg.commandParams){
-                commandArray.push(`--${param.key}`)
+            let commandArray = [] 
+            for(const param of modelCfg.command){
+
                 
-                if(param.type === 'relativePath'){
+                if(param.type === 'fixed'){
+                    if(param.value) commandArray.push(param.value)
+                
+                
+                }else if(param.type === 'relativePath'){
                     let value = null
                     if(typeof param.value === 'object' && param.value.length){
                         value = param.value.map(p=>path.join(targetPath, p)).join(' ')
@@ -138,13 +154,30 @@ const startWS = (httpServer)=>{
                     }
                     if(value) commandArray.push(value)
 
-                }else if(param.type === 'fixed'){
-                    if(param.value) commandArray.push(param.value)
+                }else if(param.type === 'input'){
+                    if( typeof modelParams[param.ref] !== 'undefined' && modelParams[param.ref] !== null){
+                        commandArray.push(modelParams[param.ref])
+
+                    }else if(typeof param.default !== 'undefined'){
+                        commandArray.push(param.default)
+                    
+                    }else{
+                        //ignore
+                    }
                 }
             }
-            console.log(commandArray)
-            //const command = commandArray.join(' ')
 
+            // commandArray = [
+            // 'python', '/home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py',
+            // '-i', '/home/ccig/miguel/node_apps/cliniti-ai-inference/jobs/test1/inputs/seriesT2/',
+            // '-m', '/home/jose_almeida/projects/nnunet_docker/models/prostate_zone_model',
+            // '-o', '/home/ccig/miguel/node_apps/cliniti-ai-inference/jobs/test1/output',
+            // '-M', '/home/jose_almeida/projects/nnunet_docker/metadata_templates/prostate-zones.json',
+            // '-f', '0',
+            // '-t', '-D'
+            // ]
+            console.log(commandArray)
+            
             //when testing we need to simulate a command run and we nned to copy output test files to the job output folder
             if(cfg.env === 'dev'){
                 //a test command, could be other
@@ -160,14 +193,16 @@ const startWS = (httpServer)=>{
                     
                 }
             }
-
+		
             //execute command
-            try {
-                await cmd(commandArray)
+           
+
+	        try {
+               await cmd(commandArray, {uid: 1000, gid:1000,  cwd: '/home/ccig/miguel/node_apps/cliniti-ai-inference'})
             } catch (error) {
                 console.error(error)
             }
-            console.log('continue')
+            
             //command has finished
             const responseContent = modelCfg.response
             
@@ -193,7 +228,7 @@ const startWS = (httpServer)=>{
             }
             //job finished so delete the job folder - consider keeping it if a job management tool is used
             console.log('deleting', targetPath)
-            //fs.rmSync(targetPath, { recursive: true, force: true })
+            fs.rmSync(targetPath, { recursive: true, force: true })
         })
 
      
@@ -218,9 +253,9 @@ const startWS = (httpServer)=>{
 
 function cmd(command, options = {}) {
  
-	//options.stdio = ['pipe', 'pipe', 'pipe']
 
-    const p = spawn(command[0], command.slice(1), options)
+
+    let p = spawn(command[0], command.slice(1), options)
 	
 	//p.stdin.write(options.inputPassword + '\n');
         //p.stdin.end()    
@@ -229,23 +264,24 @@ function cmd(command, options = {}) {
         let stdoutData = ''
         let stderrData = ''
 
-        p.stdout.on('data', (data) => {
-            stdoutData += data.toString()
-            process.stdout.write(data.toString())
-        })
+	p.stdout.on('data', (data) => {
+  		console.log(`stdout: ${data}`);
+	});
 
-        p.stderr.on('data', (data) => {
-            stderrData += data.toString()
-            process.stderr.write(data.toString())
-        })
+	p.stderr.on('data', (data) => {
+  		console.error(`stderr: ${data}`);
+	});
 
-        p.on('exit', (code) => {
-            if (code === 0) {
-                resolve({ code, stdout: stdoutData, stderr: stderrData })
+	p.on('close', (code) => {
+  		console.log(`child process exited with code ${code}`);
+	    if (code === 0) {
+                resolve({ code })
             } else {
-                reject({ code, stdout: stdoutData, stderr: stderrData })
+                reject({ code })
             }
-        })
+	}); 
+
+
 
         p.on('error', (err) => {
             reject(err)
