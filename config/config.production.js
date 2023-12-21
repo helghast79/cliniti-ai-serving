@@ -11,6 +11,9 @@ module.exports = {
         path: '/ws-ai'
     },
     ai: {
+        cwd: 1000,
+        uid: 1000,
+        gid: '/home/ccig/miguel/node_apps/cliniti-ai-inference',
         jobsQueueFile: 'jobs/jobsQueue.json',
         jobsDoneFile: 'jobs/jobsDone.json',
         modelsFile: 'ai/models.json', 

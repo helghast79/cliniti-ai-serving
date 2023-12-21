@@ -63,7 +63,9 @@ const startWS = (httpServer)=>{
 
             for(const [modelInput, modelInputValue] of Object.entries(payload.data)){
 
+                
                 const inputDef = modelInputs.find(mi => mi.id === modelInput)
+                if(!inputDef) {console.log('no input found'); continue}
 
                 if(inputDef.type === 'series'){
                     const targetSeriesPath = path.join(inputsPath, inputDef.id)
@@ -198,7 +200,7 @@ const startWS = (httpServer)=>{
            
 
 	        try {
-               await cmd(commandArray, {uid: 1000, gid:1000,  cwd: '/home/ccig/miguel/node_apps/cliniti-ai-inference'})
+               await cmd(commandArray, {uid: cfg.ai.uid, gid: cfg.ai.gid,  cwd: cfg.ai.cwd })
             } catch (error) {
                 console.error(error)
             }
