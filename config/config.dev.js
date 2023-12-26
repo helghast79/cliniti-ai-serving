@@ -11,10 +11,10 @@ module.exports = {
         path: '/ws-ai'
     },
     ai: {
-        cwd: './',
         uid: 501,
         gid: 80,
-        jobsQueueFile: 'jobs/jobsQueue.json',
+        cwd: './',
+	jobsQueueFile: 'jobs/jobsQueue.json',
         jobsDoneFile: 'jobs/jobsDone.json',
         modelsFile: 'ai/models.json', 
     },

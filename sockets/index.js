@@ -34,8 +34,8 @@ const startWS = (httpServer)=>{
             //     status: 'created'
             // }
             const modelId = payload.job.model
-            const modelCfg = modelList.find(m=>m.id = modelId)
-
+            const modelCfg = modelList.find(m=>m.id === modelId)
+console.log(modelId, modelCfg)
             const modelInputs = payload.job.modelInputs // [{id: seriesT2, type: series}, ...]
             const jsonObj = {}
             const modelParams = {}
@@ -200,7 +200,7 @@ const startWS = (httpServer)=>{
            
 
 	        try {
-               await cmd(commandArray, {uid: cfg.ai.uid, gid: cfg.ai.gid,  cwd: cfg.ai.cwd })
+               await cmd(commandArray, { uid: cfg.ai.uid, gid: cfg.ai.gid, cwd: cfg.ai.cwd })
             } catch (error) {
                 console.error(error)
             }
