@@ -14,7 +14,7 @@ module.exports = {
         uid: 501,
         gid: 80,
         cwd: './',
-	jobsQueueFile: 'jobs/jobsQueue.json',
+	    jobsQueueFile: 'jobs/jobsQueue.json',
         jobsDoneFile: 'jobs/jobsDone.json',
         modelsFile: 'ai/models.json', 
     },

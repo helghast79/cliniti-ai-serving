@@ -46,7 +46,7 @@
             {"id": "folds", "type": "range", "modelParam": true, "label": "AI Folds", "minValue":0, "maxValue":4, "increment":1, "required": false, "default":2}
         ],
         "output":[
-            {"id":"segT2", "type": "uploadSeg", "fileType": "dcm", "target":"seriesT2"}
+            {"id":"cancerResult", "type": "object"}
         ],
         "command": [
             {"value": "python", "type": "fixed"},
@@ -65,7 +65,7 @@
             {"value": "-D", "type": "fixed"}
         ],
         "response": [
-            {"id": "segT2", "type": "uploadSeg", "fileType": "dcm"}
+            {"id": "cancerResult", "type": "object", "file": "output.json"}
         ]
     },
     {

@@ -2,10 +2,23 @@
 (()=>'use strict')(); //use strict in function form
 // ================================================================
 const   cfg = require('../config'),
+        axios = require('axios'),
+        http = require('http'),
         path = require('path'),
         fs = require('fs-extra'),
+        FormData  = require('form-data'),
         { spawn, exec } = require('child_process'),
         modelList = require(`../${cfg.ai.modelsFile}`)
+
+
+
+
+
+
+//this is needed in whenever there is no proper ssl certificate in the server
+const agent = new http.Agent({
+    rejectUnauthorized: false
+})
 
 
 
@@ -14,31 +27,61 @@ const   cfg = require('../config'),
 const startWS = (httpServer)=>{
     const io = require("socket.io")(httpServer, {path: cfg.ws.path})
 
-    
+
     io.on('connection', socket => {
         console.log(socket.id, 'connected')
 
+
+
         socket.emit('connected', socket.id)
+
+
 
         socket.on('get-ai-models', ()=>{
             socket.emit('get-ai-models-response', modelList)
         })
         
         
+
+
+
+
+
+
+
+        //run AI with local or api data 
         socket.on('run-model-inference', async (payload) => { //payload = {job: ..., data: ...}
             
             // payload.job = {
             //     id: ...,
             //     socketId: ...,
             //     model: ...,
+            //     inputSource: 'local' or 'api
+            //     modelInputs: ...
+            //     viewerUrl: only in 'api'
+            //     pacsApi: only in 'api'
             //     status: 'created'
             // }
+            const isApiRequest = payload.job.inputSource === 'api'
+
             const modelId = payload.job.model
             const modelCfg = modelList.find(m=>m.id === modelId)
-console.log(modelId, modelCfg)
+
             const modelInputs = payload.job.modelInputs // [{id: seriesT2, type: series}, ...]
             const jsonObj = {}
             const modelParams = {}
+            
+            //only for API
+            //put the various response items in an object so that the frontend
+            //can chose how to display them and send all of them at the same time
+            const apiResponse = {}
+            
+            //update status on api inference jobs
+            if(isApiRequest){
+                socket.emit('run-model-inference-update', {id: payload.job.id, status: 'started'})
+            }
+            
+            //console.log(payload)
 
             //used for testing, holds some testing output to simulate the model inference
             const testOutputFolder = path.join(__dirname, '../jobs/test/output')
@@ -63,11 +106,15 @@ console.log(modelId, modelCfg)
 
             for(const [modelInput, modelInputValue] of Object.entries(payload.data)){
 
-                
                 const inputDef = modelInputs.find(mi => mi.id === modelInput)
                 if(!inputDef) {console.log('no input found'); continue}
-
+console.log('-----', modelInput, modelInputValue)
                 if(inputDef.type === 'series'){
+
+                    //add the series to the response (only for API)
+                    if(!apiResponse.series) apiResponse.series = []
+                    apiResponse.series.push(modelInputValue)
+
                     const targetSeriesPath = path.join(inputsPath, inputDef.id)
                     //create if not created yet
                     if (!fs.existsSync(targetSeriesPath)) { 
@@ -77,33 +124,53 @@ console.log(modelId, modelCfg)
                     //it will ether be an array of files or an array of url's to the files
                     if(Array.isArray(modelInputValue)){
                         //it's a series (array of buffers or url strings)
-                        modelInputValue.forEach((element, index) => {
+                        modelInputValue.forEach(async (element, index) => {
+                            
                             // Check if the element is a Buffer
                             if (Buffer.isBuffer(element)) {
-                              // Create a file name with a unique identifier
-                              const fileName = `file_${index}.dcm`
-                              const filePath = path.join(targetSeriesPath, fileName)
-                              // Write the buffer to a file
-				
-                              fs.writeFileSync(filePath, element)
-                              fs.chmodSync(filePath, '777')
+                                // Create a file name with a unique identifier
+                                const fileName = `file_${index}.dcm`
+                                const filePath = path.join(targetSeriesPath, fileName)
+                                // Write the buffer to a file
+                                fs.writeFileSync(filePath, element)
+                                //fs.chmodSync(filePath, '777')
 			                
-                            } else {
-                              //download file from the url
-
-                            }
+                            }//-- doesn't make sense to be an array of series on a single input --- //else {
+                            //     const rawInstances = axios.get(`${payload.job.pacsApi}/series/${element}`, {httpsAgent: agent})
+                            //     const instanceIds = rawInstances.data  //['dfgfj4353-fhjsdg45-rtbjhgfhd4-dfgjhdfjk', '...']
+                
+                            //     const downloadPromises = [];
+                            //     for (const instanceId of instanceIds) {
+                            //         downloadPromises.push( downloadFile(`${payload.job.pacsApi}/instances/${instanceId}/file`, filePath) )
+                            //     }
+                            //     await Promise.all(downloadPromises)
+                            // }
 
                         })
+                    
+                    //could we have a single entry for a file buffer?? possibly if it's a multiframe series??   
                     }else{
-                        //could we have a single entry for a file or url to a file??
+                        
                         if (Buffer.isBuffer(modelInputValue)) {
                             const filePath = path.join(targetSeriesPath, `file_series.dcm`)
                             // Write the buffer to a file
                             fs.writeFileSync(filePath, modelInputValue)
+                            //fs.chmodSync(filePath, '777')
+
                         }else{
-                            //download file from the url
+                            
+                            const rawInstances = await axios.get(`${payload.job.pacsApi}/series/${modelInputValue}`, {httpsAgent: agent})
+                            const instanceIds = rawInstances.data.Instances  //['dfgfj4353-fhjsdg45-rtbjhgfhd4-dfgjhdfjk', '...']
+                            //console.log('-----II---', instanceIds)
+                            const downloadPromises = [];
+                            for (const [index, instanceId] of instanceIds.entries()) {
+                                const filePath = path.join(targetSeriesPath, `file_${index}.dcm`)
+                                downloadPromises.push( downloadFile(`${payload.job.pacsApi}/instances/${instanceId}/file`, filePath) )
+                            }
+                            await Promise.all(downloadPromises)
                         }
                     }
+
                 //other type of inputs
                 }else{
                     //input is to be included in command line
@@ -119,13 +186,16 @@ console.log(modelId, modelCfg)
 
             }
             
-
-            // Convert the object to a JSON string
-            const jsonString = JSON.stringify(jsonObj, null, 2) 
-            // Specify the path where you want to write the JSON file
-            const jsonPath = path.join(inputsPath, 'otherInputs.json')
-            // Write the JSON string to the file
-            fs.writeFileSync(jsonPath, jsonString)
+            //no need to same empty json file if no other inputs exist
+            if(Object.keys(jsonObj).length){
+                // Convert the object to a JSON string
+                const jsonString = JSON.stringify(jsonObj, null, 2) 
+                // Specify the path where you want to write the JSON file
+                const jsonPath = path.join(inputsPath, 'otherInputs.json')
+                // Write the JSON string to the file
+                fs.writeFileSync(jsonPath, jsonString)
+            }
+            
 
             // sudo /home/jose_almeida/micromamba/envs/docker-env/bin/python \
             //     /home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py \
@@ -197,8 +267,6 @@ console.log(modelId, modelCfg)
             }
 		
             //execute command
-           
-
 	        try {
                await cmd(commandArray, { uid: cfg.ai.uid, gid: cfg.ai.gid, cwd: cfg.ai.cwd })
             } catch (error) {
@@ -208,29 +276,91 @@ console.log(modelId, modelCfg)
             //command has finished
             const responseContent = modelCfg.response
             
-            for(const responseItem of responseContent){
+            //API requests -------
+            if(isApiRequest){
+                
+                for(const responseItem of responseContent){
                  
-                 //send the response to different addresses depending on the type of output
-                 if(responseItem.type === 'uploadSeg'){
-                    const files = fs.readdirSync(outputPath)
-                    const filteredFiles = files.filter(file => path.extname(file) === `.${responseItem.fileType}`)
-                    
-                    if(filteredFiles && filteredFiles.length){
-                    
-                        const dicomFileContent = fs.readFileSync(path.join(outputPath, filteredFiles[0])) //just the first file ????
-                        socket.emit('run-model-inference-response-seg', dicomFileContent)
+                    //send the response to different addresses depending on the type of output
+                    if(responseItem.type === 'uploadSeg'){
+                        const files = fs.readdirSync(outputPath)
+                        const filteredFiles = files.filter(file => path.extname(file) === `.${responseItem.fileType}`)
+                        
+                        if(filteredFiles && filteredFiles.length){
+                            const filePath = path.join(outputPath, filteredFiles[0])
+                            //console.log('RRRRRRR', `${payload.job.pacsApi}/instances`, filePath)
+                           
+                            const response = await uploadFile( `${payload.job.pacsApi}/instances`, filePath)
+                           
+                            if(response){
+                                /*
+                                  Response: {
+                                    ID: '59f49211-00794f4d-3cd6c2f6-72dd1627-0499d9d3',
+                                    ParentPatient: '2770b02b-500794c3-28032caa-db8fc2e3-ce5b160b',
+                                    ParentSeries: 'ab5be626-9a6cb4aa-ab909f74-7be543a2-b1294d45',
+                                    ParentStudy: '0094790f-330e3e96-9b48e126-5b63b66e-7b0c41b5',
+                                    Path: '/instances/59f49211-00794f4d-3cd6c2f6-72dd1627-0499d9d3',
+                                    Status: 'AlreadyStored'
+                                    }
+                                 */
+                                
+                                apiResponse.series.push(response.ParentSeries)
+                            }
+                        }
+                     
+                    }else if(responseItem.type === 'object'){
+                        const outputFilepath = path.join(outputPath, responseItem.file)
+                        if(fs.existsSync(outputFilepath)) {
+                            const fileContent = fs.readFileSync(outputFilepath, 'utf8');
+                            const jsonObject = JSON.parse(fileContent);
+                            apiResponse.obj = {...apiResponse.obj, ...jsonObject}
+                        }
                     }
+                }
+
+                //send the response
+                socket.emit('run-model-inference-update', {id: payload.job.id, status: 'done', response: apiResponse})
+            
+
+            //local file requests ------
+            }else{
+
+                for(const responseItem of responseContent){
                  
-                 }else if(responseItem.type === 'object'){
-                    //get the object from a file for example
-                    const obj = {test: 'test obj'}
-                    //send the object
-                    socket.emit('run-model-inference-response-obj', obj)
+                    //send the response to different addresses depending on the type of output
+                    if(responseItem.type === 'uploadSeg'){
+                        const files = fs.readdirSync(outputPath)
+                        const filteredFiles = files.filter(file => path.extname(file) === `.${responseItem.fileType}`)
+                        
+                        if(filteredFiles && filteredFiles.length){
+                            //get the path to the file to send to the frontend
+                            const filePath = path.join(outputPath, filteredFiles[0])
+                            const dicomFileContent = fs.readFileSync(filePath) //just the first file ????
+                            socket.emit('run-model-inference-response-seg', dicomFileContent)
+                        }
+                     
+                    }else if(responseItem.type === 'object'){
+                        const outputFilepath = path.join(outputPath, responseItem.file)
+                        if(fs.existsSync(outputFilepath)) {
+                            const fileContent = fs.readFileSync(outputFilepath, 'utf8')
+                            const jsonObject = JSON.parse(fileContent)
+                            socket.emit('run-model-inference-response-obj', jsonObject)
+                        }
+                        
+                    }
                 }
             }
-            //job finished so delete the job folder - consider keeping it if a job management tool is used
-            console.log('deleting', targetPath)
-            fs.rmSync(targetPath, { recursive: true, force: true })
+
+            
+
+
+
+            //job finished so delete the job folder if it's a api source files as response is sent to orthanc
+            if(!isApiRequest){
+                console.log('deleting', targetPath)
+                //fs.rmSync(targetPath, { recursive: true, force: true })
+            }
+            
         })
 
      
@@ -290,7 +420,102 @@ function cmd(command, options = {}) {
         })
     })
     
+}
+
+
+
+
+
+
+
+
+
+
+async function downloadFile(url, destinationPath) {
+    const response = await axios({
+        method: 'get',
+        url: url,
+        responseType: 'stream',
+      })
+    
+      const writer = fs.createWriteStream(destinationPath)
+    
+      return new Promise((resolve, reject) => {
+        writer.on('finish', () => {
+          resolve()
+        })
+    
+        writer.on('error', err => {
+          reject(err)
+        })
+    
+        response.data.pipe(writer)
+      })
   }
+
+
+
+
+
+
+function uploadFile_old(url, source) {
+    return new Promise( async (resolve, reject) => {
+      
+        const reader = fs.createReadStream(source)
+    
+        const formData = new FormData()
+        formData.append('file', reader)
+        
+        try {
+            const response = await axios.post(url, formData, {
+                headers: {
+                    ...formData.getHeaders()
+                }
+            })
+            resolve(response.data)
+
+        } catch (error) {
+            reject(error)
+        }
+    })
+}
+
+
+
+
+async function uploadFile(url, filePath) {
+    try {
+        // Read the binary data from the file
+        const binaryData = fs.readFileSync(filePath)
+    
+        // Set up the Axios request configuration
+        const config = {
+          headers: {
+            'Content-Type': 'application/octet-stream', // Set the appropriate content type
+          },
+        }
+    
+        // Send the POST request with binary data
+        const response = await axios.post(url, binaryData, config)
+        return response.data
+      } catch (error) {
+        console.error('Error sending POST request:', error.message)
+      }
+  }
+
+
+
+
+  // const form = new FormData()
+    // form.append('file', fs.createReadStream( path.join(jobFolderOutput, outputFiles[0])) )
+
+    // const responseUpload = await axios.post(`${pacsApi}/instances`, form, {
+    //     httpsAgent: agent,
+    //     headers: {
+    //         ...form.getHeaders()
+    //     }
+    // })
+
 
 
 
