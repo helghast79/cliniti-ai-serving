@@ -46,6 +46,7 @@
             {"id": "folds", "type": "range", "modelParam": true, "label": "AI Folds", "minValue":0, "maxValue":4, "increment":1, "required": false, "default":2}
         ],
         "output":[
+	    {"id":"segT2", "type": "uploadSeg", "fileType": "dcm", "target":"seriesT2"},
             {"id":"cancerResult", "type": "object"}
         ],
         "command": [
@@ -65,14 +66,15 @@
             {"value": "-D", "type": "fixed"}
         ],
         "response": [
-            {"id": "cancerResult", "type": "object", "file": "output.json"}
-        ]
+            {"id": "cancerResult", "type": "object", "file": "output.json"},
+		{"type": "uploadSeg", "fileType": "dcm"}        
+]
     },
     {
         "id": "prostate_ac1",
         "name": "Prostate Lesions Probability Radiomics",
         "version": "0.1",
-        "releaseDate": "2023-11-29",
+        "releaseDate": "2024-01-09",
         "requirements": [
             "1 MRI T2 weighted series",
             "1 ADC series",
@@ -81,29 +83,28 @@
         "frontend":[
             {"id": "seriesT2", "type": "series", "label": "T2 MRI", "required": true},
             {"id": "seriesADC", "type": "series", "label": "ADC", "required": true},
-            {"id": "seriesDWI", "type": "series", "label": "T2 MRI", "required": true}
+            {"id": "seriesDWI", "type": "series", "label": "DWI", "required": true}
         ],
         "output":[
-            {"id":"message", "type": "dialog"}
+            {"id":"cancerResult", "type": "object"}
         ],
         "command": [
-            {"value": "python", "type": "fixed"},
-            {"value": "/home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py", "type": "fixed"},
-            {"value": "-i", "type": "fixed"},
-            {"value": ["inputs/seriesT2", "inputs/seriesADC", "inputs/seriesDWI"], "type": "relativePath"},
-            {"value": "-m", "type": "fixed"},
-            {"value": "", "type": "fixed"},
-            {"value": "-o", "type": "fixed"},
-            {"value": "output", "type": "relativePath"},
-            {"value": "-M", "type": "fixed"},
-            {"value": "/home/jose_almeida/projects/nnunet_docker/metadata_templates/whole-prostate.json", "type": "fixed"},
-            {"value": "-f", "type": "fixed"},
-            {"type": "input", "ref":"folds", "default":"2"},
-            {"value": "-t", "type": "fixed"},
-            {"value": "-D", "type": "fixed"}
+            {"value": "docker", "type": "fixed"},
+	    {"value": "run", "type": "fixed"},
+            {"value": "--gpus", "type": "fixed"},
+            {"value": "all", "type": "fixed"},
+	    {"value": "--rm", "type": "fixed"},
+            {"value": "-v", "type": "fixed"},
+            {"value": "/home/:/data/", "type": "fixed"},
+            {"value": "gland_aggressiveness_prediction:latest", "type": "fixed"},
+	    {"value": "-i", "type": "fixed"},
+	    {"value":"inputs", "type": "relativePath"},
+	    {"value": "-d", "type": "fixed"},
+	    {"value": "-o", "type": "fixed"},
+            {"value":"output", "type": "relativePath"}
         ],
         "response": [
-            {"type": "message", "fileType": "json"}
+	    {"id": "cancerResult", "type": "object", "file": "output/predictions.json"}
         ]
     }
 ]

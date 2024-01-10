@@ -209,9 +209,10 @@ console.log('-----', modelInput, modelInputValue)
 
             
             //build command
-            let commandArray = [] 
+            let commandArray = []
+	    let isDocker = false 
             for(const param of modelCfg.command){
-
+		if(param.value === 'docker') isDocker = true
                 
                 if(param.type === 'fixed'){
                     if(param.value) commandArray.push(param.value)
@@ -224,6 +225,10 @@ console.log('-----', modelInput, modelInputValue)
                     }else{
                         value = path.join(targetPath, param.value)
                     }
+		    //find a better way to do this (through config option maybe)
+		    if(isDocker && value){
+			value = value.replaceAll('/home/', '/data/') //docker mapping /data to /home otherwise /home will not be found
+		    }
                     if(value) commandArray.push(value)
 
                 }else if(param.type === 'input'){
@@ -232,6 +237,7 @@ console.log('-----', modelInput, modelInputValue)
 
                     }else if(typeof param.default !== 'undefined'){
                         commandArray.push(param.default)
+
                     
                     }else{
                         //ignore
