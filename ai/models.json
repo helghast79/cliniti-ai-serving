@@ -46,7 +46,7 @@
             {"id": "folds", "type": "range", "modelParam": true, "label": "AI Folds", "minValue":0, "maxValue":4, "increment":1, "required": false, "default":2}
         ],
         "output":[
-	    {"id":"segT2", "type": "uploadSeg", "fileType": "dcm", "target":"seriesT2"},
+	        {"id":"segT2", "type": "uploadSeg", "fileType": "dcm", "target":"seriesT2"},
             {"id":"cancerResult", "type": "object"}
         ],
         "command": [
@@ -67,8 +67,8 @@
         ],
         "response": [
             {"id": "cancerResult", "type": "object", "file": "output.json"},
-		{"type": "uploadSeg", "fileType": "dcm"}        
-]
+            {"type": "uploadSeg", "fileType": "dcm"}        
+        ]
     },
     {
         "id": "prostate_ac1",
@@ -86,25 +86,27 @@
             {"id": "seriesDWI", "type": "series", "label": "DWI", "required": true}
         ],
         "output":[
-            {"id":"cancerResult", "type": "object"}
+            {"id":"cancerResult", "type": "object"},
+            {"id":"segT2", "type": "uploadSeg", "fileType": "dcm", "target":"seriesT2"}
         ],
         "command": [
             {"value": "docker", "type": "fixed"},
-	    {"value": "run", "type": "fixed"},
+	        {"value": "run", "type": "fixed"},
             {"value": "--gpus", "type": "fixed"},
             {"value": "all", "type": "fixed"},
-	    {"value": "--rm", "type": "fixed"},
+	        {"value": "--rm", "type": "fixed"},
             {"value": "-v", "type": "fixed"},
             {"value": "/home/:/data/", "type": "fixed"},
             {"value": "gland_aggressiveness_prediction:latest", "type": "fixed"},
-	    {"value": "-i", "type": "fixed"},
-	    {"value":"inputs", "type": "relativePath"},
-	    {"value": "-d", "type": "fixed"},
-	    {"value": "-o", "type": "fixed"},
+	        {"value": "-i", "type": "fixed"},
+	        {"value":"inputs", "type": "relativePath"},
+	        {"value": "-d", "type": "fixed"},
+	        {"value": "-o", "type": "fixed"},
             {"value":"output", "type": "relativePath"}
         ],
         "response": [
-	    {"id": "cancerResult", "type": "object", "file": "output/predictions.json"}
+	        {"id": "cancerResult", "type": "object", "file": "predictions.json"},
+            {"id": "segT2", "type": "uploadSeg", "fileType": "dcm"}
         ]
     }
 ]

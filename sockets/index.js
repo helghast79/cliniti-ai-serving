@@ -105,15 +105,20 @@ const startWS = (httpServer)=>{
             }
 
             for(const [modelInput, modelInputValue] of Object.entries(payload.data)){
-
+               
                 const inputDef = modelInputs.find(mi => mi.id === modelInput)
                 if(!inputDef) {console.log('no input found'); continue}
-console.log('-----', modelInput, modelInputValue)
+                console.log('-----', modelInput, modelInputValue)
                 if(inputDef.type === 'series'){
 
                     //add the series to the response (only for API)
                     if(!apiResponse.series) apiResponse.series = []
                     apiResponse.series.push(modelInputValue)
+
+                    //in dev we don't need to download the series as we're going to use the test folder anyway
+                    if(isApiRequest && cfg.env === 'dev'){
+                        continue
+                    }
 
                     const targetSeriesPath = path.join(inputsPath, inputDef.id)
                     //create if not created yet
@@ -186,7 +191,7 @@ console.log('-----', modelInput, modelInputValue)
 
             }
             
-            //no need to same empty json file if no other inputs exist
+            //no need to save empty json file if no other inputs exist
             if(Object.keys(jsonObj).length){
                 // Convert the object to a JSON string
                 const jsonString = JSON.stringify(jsonObj, null, 2) 
@@ -210,9 +215,10 @@ console.log('-----', modelInput, modelInputValue)
             
             //build command
             let commandArray = []
-	    let isDocker = false 
+	        let isDocker = false 
+
             for(const param of modelCfg.command){
-		if(param.value === 'docker') isDocker = true
+		        if(param.value === 'docker') isDocker = true
                 
                 if(param.type === 'fixed'){
                     if(param.value) commandArray.push(param.value)
@@ -225,10 +231,12 @@ console.log('-----', modelInput, modelInputValue)
                     }else{
                         value = path.join(targetPath, param.value)
                     }
-		    //find a better way to do this (through config option maybe)
-		    if(isDocker && value){
-			value = value.replaceAll('/home/', '/data/') //docker mapping /data to /home otherwise /home will not be found
-		    }
+                    
+                    //find a better way to do this (through config option maybe)
+                    if(isDocker && value){
+                        value = value.replaceAll('/home/', '/data/') //docker mapping /data to /home otherwise /home will not be found
+                    }
+                    
                     if(value) commandArray.push(value)
 
                 }else if(param.type === 'input'){
