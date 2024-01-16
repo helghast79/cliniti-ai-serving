@@ -234,7 +234,7 @@ const startWS = (httpServer)=>{
                     
                     //find a better way to do this (through config option maybe)
                     if(isDocker && value){
-                        value = value.replaceAll('/home/', '/data/') //docker mapping /data to /home otherwise /home will not be found
+                        value = value.replaceAll('/srv/', '/data/') //docker mapping /data to /home otherwise /home will not be found
                     }
                     
                     if(value) commandArray.push(value)
