@@ -110,8 +110,6 @@ const startWS = (httpServer)=>{
                             
                             if(filteredFiles && filteredFiles.length){
                                 const filePath = path.join(outputPath, filteredFiles[0])
-                                //console.log('RRRRRRR', `${payload.job.pacsApi}/instances`, filePath)
-                               
                                 const response = await uploadFile( `${payload.job.pacsApi}/instances`, filePath)
                                
                                 if(response){
@@ -142,7 +140,7 @@ const startWS = (httpServer)=>{
     
                     //send the response
                     socket.emit('run-model-inference-update', {id: payload.job.id, status: 'done', response: apiResponse})
-                
+                    return 
                 }
 
                 //targetPath already exists, check inputs and output as well
