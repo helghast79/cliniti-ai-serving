@@ -15,7 +15,7 @@
         ],
         "command": [
             {"value": "python", "type": "fixed"},
-            {"value": "/home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py", "type": "fixed"},
+            {"value": "/srv/cliniti/cliniti-ai-inference/ai/entrypoint-with-docker.py", "type": "fixed"},
             {"value": "-i", "type": "fixed"},
             {"value": "inputs/seriesT2", "type": "relativePath"},
             {"value": "-m", "type": "fixed"},
@@ -51,7 +51,7 @@
         ],
         "command": [
             {"value": "python", "type": "fixed"},
-            {"value": "/home/jose_almeida/projects/nnunet_docker/utils/entrypoint-with-docker.py", "type": "fixed"},
+            {"value": "/srv/cliniti/cliniti-ai-inference/ai/entrypoint-with-docker.py", "type": "fixed"},
             {"value": "-i", "type": "fixed"},
             {"value": "inputs/seriesT2", "type": "relativePath"},
             {"value": "-m", "type": "fixed"},
