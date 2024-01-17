@@ -99,6 +99,52 @@ const startWS = (httpServer)=>{
                 fs.mkdirSync(inputsPath)
                 fs.mkdirSync(outputPath)
             }else{
+                //the output has been generated before so just send it as is
+                if(isApiRequest && fs.existsSync(outputPath)){
+                    for(const responseItem of modelCfg.response){
+                 
+                        //send the response to different addresses depending on the type of output
+                        if(responseItem.type === 'uploadSeg'){
+                            const files = fs.readdirSync(outputPath)
+                            const filteredFiles = files.filter(file => path.extname(file) === `.${responseItem.fileType}`)
+                            
+                            if(filteredFiles && filteredFiles.length){
+                                const filePath = path.join(outputPath, filteredFiles[0])
+                                //console.log('RRRRRRR', `${payload.job.pacsApi}/instances`, filePath)
+                               
+                                const response = await uploadFile( `${payload.job.pacsApi}/instances`, filePath)
+                               
+                                if(response){
+                                    /*
+                                      Response: {
+                                        ID: '59f49211-00794f4d-3cd6c2f6-72dd1627-0499d9d3',
+                                        ParentPatient: '2770b02b-500794c3-28032caa-db8fc2e3-ce5b160b',
+                                        ParentSeries: 'ab5be626-9a6cb4aa-ab909f74-7be543a2-b1294d45',
+                                        ParentStudy: '0094790f-330e3e96-9b48e126-5b63b66e-7b0c41b5',
+                                        Path: '/instances/59f49211-00794f4d-3cd6c2f6-72dd1627-0499d9d3',
+                                        Status: 'AlreadyStored'
+                                        }
+                                     */
+                                    
+                                    apiResponse.series.push(response.ParentSeries)
+                                }
+                            }
+                         
+                        }else if(responseItem.type === 'object'){
+                            const outputFilepath = path.join(outputPath, responseItem.file)
+                            if(fs.existsSync(outputFilepath)) {
+                                const fileContent = fs.readFileSync(outputFilepath, 'utf8');
+                                const jsonObject = JSON.parse(fileContent);
+                                apiResponse.obj = {...apiResponse.obj, ...jsonObject}
+                            }
+                        }
+                    }
+    
+                    //send the response
+                    socket.emit('run-model-inference-update', {id: payload.job.id, status: 'done', response: apiResponse})
+                
+                }
+
                 //targetPath already exists, check inputs and output as well
                 if(!fs.existsSync(inputsPath)) fs.mkdirSync(inputsPath)
                 if(!fs.existsSync(outputPath)) fs.mkdirSync(outputPath)
@@ -369,10 +415,10 @@ const startWS = (httpServer)=>{
 
 
 
-            //job finished so delete the job folder if it's a api source files as response is sent to orthanc
+            //job finished so delete the job folder if it's not api 
             if(!isApiRequest){
                 console.log('deleting', targetPath)
-                //fs.rmSync(targetPath, { recursive: true, force: true })
+                fs.rmSync(targetPath, { recursive: true, force: true })
             }
             
         })
