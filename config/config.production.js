@@ -18,6 +18,9 @@ module.exports = {
         jobsDoneFile: 'jobs/jobsDone.json',
         modelsFile: 'ai/models.json', 
     },
+    ollama: {
+        host: 'http://127.0.0.1:11434'
+    },
     logs: {
         infoFilename: './logs/info-%DATE%.log',
         expressFilename: './logs/express-%DATE%.log',

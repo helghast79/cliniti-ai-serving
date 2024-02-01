@@ -83,7 +83,8 @@
         "frontend":[
             {"id": "seriesT2", "type": "series", "label": "T2 MRI", "required": true},
             {"id": "seriesADC", "type": "series", "label": "ADC", "required": true},
-            {"id": "seriesDWI", "type": "series", "label": "DWI", "required": true}
+            {"id": "seriesDWI", "type": "series", "label": "DWI", "required": true},
+            {"id": "psa", "type": "number", "label": "PSA", "required": false}
         ],
         "output":[
             {"id":"cancerResult", "type": "object"},

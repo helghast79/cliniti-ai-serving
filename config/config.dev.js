@@ -18,6 +18,9 @@ module.exports = {
         jobsDoneFile: 'jobs/jobsDone.json',
         modelsFile: 'ai/models.json', 
     },
+    ollama: {
+        host: 'http://ollama.ccig.champalimaud.pt'
+    },
     logs: {
         infoFilename: './logs/info-%DATE%.log',
         expressFilename: './logs/express-%DATE%.log',
