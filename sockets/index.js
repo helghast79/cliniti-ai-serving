@@ -49,60 +49,44 @@ const startWS = (httpServer)=>{
 
 
 
-        socket.on('chat-ollama', async (contextMsgs) => {
-            
-            console.log('---->', contextMsgs)
-            
-            axios({
+        socket.on('chat-ollama', async ({ question, chat_history }) => {
+            try {
+              const response = await axios({
                 method: 'get',
                 url: 'http://ccig.champalimaud.pt/rag-api/ask_db',
                 headers: {
                   'Content-Type': 'application/json',
+                  'Accept': 'application/json'
                 },
                 data: {
-                  question: contextMsgs,
+                  question,
+                  chat_history,
                   k: 25,
                   json_output: false,
+                  return_metadata: false
                 },
                 responseType: 'stream'
-            })
-            .then( response => {
-                // Process the chunked JSON data
-                response.data.on('data', chunk => {
-                    //const jsonData = JSON.parse(chunk.toString('utf8'))
-                    const msg =  chunk.toString()
-                    if(!msg.includes("{'source_metadata'")){
-                        socket.emit('chat-ollama-response', msg)
-                    }
-                    
-                    
-                    
-                })
-            
-                // Handle the end of the stream if needed
-                response.data.on('end', () => {
-                    // Your code for handling the end of the stream goes here
-                })
-
-            })
-            .catch(error => {
-                // Handle errors
-                console.error('Error:', error)
-            })
-
-            // const streamChat = (part)=>{
-            //     console.log()
-            //     socket.emit('chat-ollama-response', part)
-            // }
-           
-            // import('./ollamaChatModule.mjs').then(async (chatModule) => {
-            //     chatModule.chat({ model: 'mixtral', messages: contextMsgs, stream: true }, streamChat)
-                
-            // }).catch((error) => {
-            //     console.error('Error importing chatModule:', error)
-            // })
-
-        })
+              })
+          
+              let fullResponse = ''
+          
+              // Process the chunked JSON data
+              response.data.on('data', chunk => {
+                let text = chunk.toString()
+                fullResponse += text.replace(/\n/g, '').replace(/ +/g, ' ').replace(/(<NEW_LINE>)+/g, '<br><br>')
+              })
+          
+              // Handle the end of the stream if needed
+              response.data.on('end', () => {
+                if (fullResponse !== '') {
+                  socket.emit('chat-ollama-response', fullResponse)
+                }
+              })
+            } catch (error) {
+              // Handle errors
+              console.error('Error:', error)
+            }
+          })
 
 
 

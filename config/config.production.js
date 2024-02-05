@@ -19,7 +19,8 @@ module.exports = {
         modelsFile: 'ai/models.json', 
     },
     ollama: {
-        host: 'http://127.0.0.1:11434'
+        host: 'http://127.0.0.1:11434',
+        ragApi: 'http://ccig.champalimaud.pt/rag-api/ask_db'
     },
     logs: {
         infoFilename: './logs/info-%DATE%.log',
