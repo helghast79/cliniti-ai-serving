@@ -239,3 +239,5 @@ $RECYCLE.BIN/
 
 # pm2
 ecosystem.config.js
+
+jobs/*
