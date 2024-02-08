@@ -413,7 +413,11 @@ const startWS = (httpServer)=>{
                     }else if(responseItem.type === 'url'){
                         let url = ''
                         if(responseItem.base && responseItem.param){
-                            url = `${responseItem.base}${responseItem.param}` //http://ccig.champalimaud.pt/niiviewer?jobid=sdhfds-32423rd2s-dsfsdf3
+                            let param = ''
+                            if(responseItem.param === 'jobid') {
+                                param = payload.job.id
+                            }
+                            url = `${responseItem.base}${param}` //http://ccig.champalimaud.pt/niiviewer?jobid=sdhfds-32423rd2s-dsfsdf3
                         }   
                         apiResponse.url = url
                     }
