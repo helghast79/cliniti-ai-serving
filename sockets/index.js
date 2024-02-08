@@ -228,16 +228,7 @@ const startWS = (httpServer)=>{
                                 fs.writeFileSync(filePath, element)
                                 //fs.chmodSync(filePath, '777')
 			                
-                            }//-- doesn't make sense to be an array of series on a single input --- //else {
-                            //     const rawInstances = axios.get(`${payload.job.pacsApi}/series/${element}`, {httpsAgent: agent})
-                            //     const instanceIds = rawInstances.data  //['dfgfj4353-fhjsdg45-rtbjhgfhd4-dfgjhdfjk', '...']
-                
-                            //     const downloadPromises = [];
-                            //     for (const instanceId of instanceIds) {
-                            //         downloadPromises.push( downloadFile(`${payload.job.pacsApi}/instances/${instanceId}/file`, filePath) )
-                            //     }
-                            //     await Promise.all(downloadPromises)
-                            // }
+                            }
 
                         })
                     
@@ -351,6 +342,7 @@ const startWS = (httpServer)=>{
             // '-t', '-D'
             // ]
             console.log(commandArray)
+            console.log(commandArray.join(' '))
             
             //when testing we need to simulate a command run and we nned to copy output test files to the job output folder
             if(cfg.env === 'dev'){
@@ -417,6 +409,13 @@ const startWS = (httpServer)=>{
                             const jsonObject = JSON.parse(fileContent);
                             apiResponse.obj = {...apiResponse.obj, ...jsonObject}
                         }
+                    
+                    }else if(responseItem.type === 'url'){
+                        let url = ''
+                        if(responseItem.base && responseItem.param){
+                            url = `${responseItem.base}${responseItem.param}` //http://ccig.champalimaud.pt/niiviewer?jobid=sdhfds-32423rd2s-dsfsdf3
+                        }   
+                        apiResponse.obj = {...apiResponse.obj, url: url}
                     }
                 }
 

@@ -63,14 +63,26 @@ if __name__ == "__main__":
         dest="folds",
         help="Sets which folds should be used with nnUNet",
         nargs="+",
-        type=int,
-        default=(0,),
+        type=str,
+        default=("0",),
     )
     parser.add_argument(
         "--tta",
         "-t",
         dest="tta",
         help="Uses test-time augmentation during prediction",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--proba_map",
+        "-p",
+        help="Produces a Nifti format probability map",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--save_nifti_inputs",
+        "-S",
+        help="Moves Nifti inputs to output folder",
         action="store_true",
     )
     parser.add_argument(
@@ -90,8 +102,9 @@ if __name__ == "__main__":
 
     data_inputs_in_docker = []
     volumes = {}
+    folds = args.folds
     for series_path in args.series_paths:
-        series_folder_name = os.path.basename(series_path)
+        series_folder_name = os.path.basename(series_path.rstrip(os.sep))
         data_input_in_docker = f"/data/input/{series_folder_name}"
         data_inputs_in_docker.append(data_input_in_docker)
         volumes[
@@ -99,6 +112,11 @@ if __name__ == "__main__":
                 series_path,
             )
         ] = {"bind": data_input_in_docker, "mode": "ro"}
+
+    if "," in folds[0]:
+        # some applications do not allow for space separated arguments
+        # so comma separation also possible
+        folds = list(set(folds[0].split(",")))
 
     volumes[os.path.abspath(args.output_dir)] = {
         "bind": "/data/output",
@@ -122,7 +140,7 @@ if __name__ == "__main__":
     complete_command = [
         f"--series_paths {' '.join(data_inputs_in_docker)}",
         f"--metadata_path /metadata/{metadata_name}",
-        f"--folds {' '.join([str(x) for x in args.folds])}",
+        f"--folds {' '.join(folds)}",
         f"--checkpoint_name {args.checkpoint_name}",
     ]
     if args.study_uid is not None:
@@ -131,6 +149,10 @@ if __name__ == "__main__":
         complete_command.append("--is_dicom")
     if args.tta is True:
         complete_command.append("--tta")
+    if args.proba_map is True:
+        complete_command.append("--proba_map")
+    if args.save_nifti_inputs is True:
+        complete_command.append("--save_nifti_inputs")
 
     docker_command = [
         "docker run",
