@@ -407,7 +407,7 @@ const startWS = (httpServer)=>{
                         if(fs.existsSync(outputFilepath)) {
                             const fileContent = fs.readFileSync(outputFilepath, 'utf8');
                             const jsonObject = JSON.parse(fileContent);
-                            apiResponse.obj = {...apiResponse.obj, ...jsonObject}
+                            apiResponse.obj = {...apiResponse.obj, ...jsonObject, ...(jsonObj ?? {})}
                         }
                     
                     }else if(responseItem.type === 'url'){
