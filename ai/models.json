@@ -5,7 +5,9 @@
         "version": "0.1",
         "releaseDate": "2024-02-07",
         "requirements": [
-            "1 MRI T2 weighted series"
+	    "1 MRI T2w series",
+            "1 ADC series",
+            "1 DWI series"
         ],
         "frontend":[
             {"id": "seriesT2", "type": "series", "label": "T2 MRI", "required": true},
@@ -16,7 +18,7 @@
             {"id":"nifti1", "type": "niftiViewer", "fileType": "nii"}
         ],
         "command": [
-            {"value": "/home/jose_almeida/micromamba/envs/python-docker/bin/python", "type": "fixed"},
+	    {"value": "/home/jose_almeida/micromamba/envs/python-docker/bin/python", "type": "fixed"},
             {"value": "/srv/cliniti/cliniti-ai-inference/ai/entrypoint-with-docker.py", "type": "fixed"},
             {"value": "-i", "type": "fixed"},
             {"value": "inputs/seriesT2", "type": "relativePath"},
@@ -25,7 +27,7 @@
             {"value": "-o", "type": "fixed"},
             {"value": "output", "type": "relativePath"},
             {"value": "-c", "type": "fixed"},
-            {"value": "nnunet_predict:prob_support", "type": "fixed"},
+            {"value": "nnunet_predict:latest", "type": "fixed"},
             {"value": "-m", "type": "fixed"},
             {"value": "/home/jose_almeida/nnunet_docker/models/prostate_aggressive_lesion_model", "type": "fixed"},
             {"value": "-M", "type": "fixed"},
@@ -33,9 +35,9 @@
             {"value": "-D", "type": "fixed"},
             {"value": "-f", "type": "fixed"},
             {"value": "0,1,2,3,4", "type": "fixed"},
-            {"value": "-tta", "type": "fixed"},
-            {"value": "-proba_map", "type": "fixed"},
-            {"value": "-save_nifti_inputs", "type": "fixed"}
+            {"value": "-t", "type": "fixed"},
+            {"value": "-p", "type": "fixed"},
+            {"value": "--save_nifti_inputs", "type": "fixed"}
         ],
         "response": [
             {"type": "url", "base": "http://ccig.champalimaud.pt/niiviewer?jobid=", "param": "jobid"}
@@ -47,9 +49,7 @@
         "version": "0.1",
         "releaseDate": "2023-12-11",
         "requirements": [
-            "1 MRI T2 weighted series",
-            "1 ADC series",
-            "1 DWI series"
+            "1 MRI T2w series"
         ],
         "frontend":[
             {"id": "seriesT2", "type": "series", "label": "T2 MRI", "required": true}
@@ -83,11 +83,10 @@
         "version": "0.1",
         "releaseDate": "2023-12-11",
         "requirements": [
-            "1 MRI T2 weighted series"
+            "1 MRI T2w series"
         ],
         "frontend":[
-            {"id": "seriesT2", "type": "series", "label": "T2 MRI", "required": true},
-            {"id": "folds", "type": "range", "modelParam": true, "label": "AI Folds", "minValue":0, "maxValue":4, "increment":1, "required": false, "default":2}
+            {"id": "seriesT2", "type": "series", "label": "T2 MRI", "required": true}
         ],
         "output":[
 	        {"id":"segT2", "type": "uploadSeg", "fileType": "dcm", "target":"seriesT2"},
@@ -116,11 +115,11 @@
     },
     {
         "id": "prostate_ac1",
-        "name": "Prostate Lesions Probability Radiomics",
+        "name": "Clinical significance disease model",
         "version": "0.1",
-        "releaseDate": "2024-01-09",
+        "releaseDate": "2024-02-07",
         "requirements": [
-            "1 MRI T2 weighted series",
+            "1 MRI T2w series",
             "1 ADC series",
             "1 DWI series"
         ],
