@@ -141,7 +141,7 @@
 	        {"value": "--rm", "type": "fixed"},
             {"value": "-v", "type": "fixed"},
             {"value": "/srv/:/data/", "type": "fixed"},
-            {"value": "gland_aggressiveness_prediction:1.2", "type": "fixed"},
+            {"value": "gland_aggressiveness_prediction:1.3", "type": "fixed"},
 	        {"value": "-i", "type": "fixed"},
 	        {"value":"inputs", "type": "relativePath"},
 	        {"value": "-d", "type": "fixed"},
