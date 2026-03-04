@@ -1,7 +1,7 @@
 [
     {
         "id": "prostate_aggressive_lesions",
-        "name": "Prostate Aggressive Lesion",
+        "name": "Prostate aggressive lesion detection",
         "version": "0.1",
         "releaseDate": "2024-02-07",
         "requirements": [
@@ -45,7 +45,7 @@
     },
     {
         "id": "prostate_zones",
-        "name": "Prostate Zones Segmentation",
+        "name": "Prostate zones (CZ+TZ and PZ) segmentation",
         "version": "0.1",
         "releaseDate": "2023-12-11",
         "requirements": [
@@ -79,7 +79,7 @@
     },
     {
         "id": "prostate_whole_gland",
-        "name": "Prostate Whole Gland Segmentation",
+        "name": "Prostate whole gland segmentation",
         "version": "0.1",
         "releaseDate": "2023-12-11",
         "requirements": [
